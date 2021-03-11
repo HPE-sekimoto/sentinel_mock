@@ -10,6 +10,6 @@ provider "google" {
 }
 
 resource "google_app_engine_application" "app" {
-  project     = var.project
+  project     = var.PROJECT_ID
   location_id = var.region
 }
