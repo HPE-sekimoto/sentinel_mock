@@ -1,7 +1,11 @@
 // GCP provider
+variable "GOOGLE_CREDENTIALS" {}
+variable "PROJECT_ID" {}
+
 provider "google" {
-  credentials = file("../../../.ssh/ksgadget-admin-1-1dd7dcdd2fdc.json")
-  project     = var.project
+  //credentials = file("./gcp_credential.json")
+  credentials = "${var.GOOGLE_CREDENTIALS}"
+  project     = "${var.PROJECT_ID}"
   region      = var.region
 }
 
