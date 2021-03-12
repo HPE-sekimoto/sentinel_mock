@@ -19,6 +19,6 @@ module "bucket" {
   version = "~> 1.3"
 
   name       = "example-xxx-bucket"
-  project_id = var.project
+  project_id = var.PROJECT_ID
   location   = "asia-northeast1"
 }
