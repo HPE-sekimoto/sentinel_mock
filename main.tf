@@ -14,76 +14,24 @@ provider "google" {
 #   location_id = var.region
 # }
 
-resource "google_project_service" "service" {
-  project = var.project
-  service = "appengineflex.googleapis.com"
-
-  disable_dependent_services = false
-}
-
-resource "google_project_iam_member" "gae_api" {
-  project = var.project
-  role    = "roles/compute.networkUser"
-  member  = "serviceAccount:${var.project}@appspot.gserviceaccount.com"
-}
-
-resource "google_app_engine_flexible_app_version" "myapp_v1" {
-  version_id = "v1"
-  project    = google_project_iam_member.gae_api.project
-  service    = "appflex"
-  runtime    = "nodejs"
-
-  entrypoint {
-    shell = "node ./app.js"
-  }
-
-  deployment {
-    zip {
-      source_url = "https://storage.googleapis.com/${google_storage_bucket.bucket.name}/${google_storage_bucket_object.object.name}"
+resource "google_compute_instance" "terraform-test" {
+  name         = var.vm_name
+  machine_type = var.machine_type
+  zone         = var.zone
+  description  = "gcp-terraform-test"
+  tags         = ["terraform-test"]
+  boot_disk {
+    initialize_params {
+      image = "debian-cloud/debian-9"
     }
   }
-
-  liveness_check {
-    path = "/"
-  }
-
-  readiness_check {
-    path = "/"
-  }
-
-  env_variables = {
-    port = "8080"
-  }
-
-  handlers {
-    url_regex        = ".*\\/my-path\\/*"
-    security_level   = "SECURE_ALWAYS"
-    login            = "LOGIN_REQUIRED"
-    auth_fail_action = "AUTH_FAIL_ACTION_REDIRECT"
-
-    static_files {
-      path = "my-other-path"
-      upload_path_regex = ".*\\/my-path\\/*"
+  network_interface {
+    network = "default"
+    access_config {
+      // Ephemeral IP
     }
   }
-
-  automatic_scaling {
-    cool_down_period = "120s"
-    cpu_utilization {
-      target_utilization = 0.5
-    }
+  service_account {
+    scopes = ["userinfo-email", "compute-ro", "storage-ro", "monitoring"]
   }
-
-  noop_on_destroy = true
-}
-
-resource "google_storage_bucket" "bucket" {
-  project = var.project
-  name = "${var.project}-appengine-static-content"
-}
-
-resource "google_storage_bucket_object" "object" {
-  name   = "hello-world.zip"
-  bucket = google_storage_bucket.bucket.name
-  source = "./hello-world.zip"
 }
