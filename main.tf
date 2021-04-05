@@ -14,6 +14,11 @@ provider "google" {
 #   location_id = var.region
 # }
 
+data "google_compute_image" "my_image" {
+  family  = "debian-9"
+  project = "debian-cloud"
+}
+
 resource "google_compute_instance" "terraform-test" {
   name         = var.vm_name
   machine_type = var.machine_type
@@ -22,7 +27,7 @@ resource "google_compute_instance" "terraform-test" {
   tags         = ["terraform-test"]
   boot_disk {
     initialize_params {
-      image = "debian-cloud/debian-9"
+      image = data.google_compute_image.my_image.self_link
     }
   }
   network_interface {
