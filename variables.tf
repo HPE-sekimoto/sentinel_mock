@@ -6,7 +6,7 @@ variable "zone" {
   description = "GCP zone name"
   default     = "asia-northeast1-c"
 }
-ariable "vm_name" {
+variable "vm_name" {
   description = "VM name"
   default     = "ks-terraform-test"
 }
