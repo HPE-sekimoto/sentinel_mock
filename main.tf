@@ -34,6 +34,7 @@ resource "google_compute_instance" "vm_ubuntu-pro-2004-lts" {
     initialize_params {
       image = data.google_compute_image.my_ubuntu-pro-2004-lts.self_link
     }
+    kms_key_self_link = google_kms_crypto_key.customer_key.self_link
   }
   network_interface {
     network = "default"
@@ -56,6 +57,7 @@ resource "google_compute_instance" "vm_debian_9" {
     initialize_params {
       image = data.google_compute_image.my_debian_9.self_link
     }
+    kms_key_self_link = google_kms_crypto_key.customer_key.self_link
   }
   network_interface {
     network = "default"
@@ -78,6 +80,7 @@ resource "google_compute_instance" "vm_windows_2016" {
     initialize_params {
       image = data.google_compute_image.my_windows_2016.self_link
     }
+    kms_key_self_link = google_kms_crypto_key.customer_key.self_link
   }
   network_interface {
     network = "default"
@@ -105,7 +108,17 @@ resource "google_kms_crypto_key" "customer_key" {
   }
 }
 
-resource "google_compute_disk" "ext_disk" {
+resource "google_compute_disk" "ext_disk1" {
+  name  = "testdisk"
+  type  = "pd-ssd"
+  zone = var.zone
+  size = 16
+  disk_encryption_key {
+    raw_key = google_kms_crypto_key.customer_key.self_link
+  }
+}
+
+resource "google_compute_disk" "ext_disk2" {
   name  = "testdisk"
   type  = "pd-ssd"
   zone = var.zone
