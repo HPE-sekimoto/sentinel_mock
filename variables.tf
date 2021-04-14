@@ -18,3 +18,6 @@ variable "env" {
   description = "environment name"
   default     = "Terraform Demo"
 }
+variable "network_name" {
+  default = "tf-lb-https-redirect-nat"
+}
