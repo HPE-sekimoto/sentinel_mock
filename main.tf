@@ -15,6 +15,7 @@ module "project-factory" {
 #  usage_bucket_prefix  = "ks/sample/1/integration"
   billing_account      = var.billing_account
 #  svpc_host_project_id = "shared_vpc_host_name"
+  activate_apis = [ "compute.googleapis.com" ]
 
 #  shared_vpc_subnets = [
 #    "projects/base-project-196723/regions/us-east1/subnetworks/default",
