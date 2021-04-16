@@ -21,3 +21,29 @@ variable "env" {
 variable "network_name" {
   default = "tf-lb-https-redirect-nat"
 }
+variable "roles" {
+  description = "role1"
+  type = list(object({
+    resource_name        = string
+    role_id              = string
+    title                = string
+    description          = string
+    roles                = list(string)
+    permissions          = list(string)
+    excluded_permissions = list(string)
+  }))
+  default = [
+    {
+      # Permission cloudonefs.isiloncloud.com/clusters.list is not supported in custom roles
+      # -> removed "roles/iam.securityAdmin"
+      # The following is OK
+      resource_name        = "custom_compute_admin"
+      role_id              = "custom_compute_admin01"
+      title                = "custom compute admin"
+      description          = "custom compute admin"
+      roles                = ["roles/compute.admin"]
+      permissions          = []
+      excluded_permissions = ["resourcemanager.projects.list", "compute.organizations.disableXpnResource", "compute.securityPolicies.copyRules", "compute.firewallPolicies.move", "compute.firewallPolicies.copyRules", "compute.securityPolicies.move", "compute.firewallPolicies.addAssociation", "compute.organizations.disableXpnHost", "compute.organizations.setFirewallPolicy", "compute.organizations.enableXpnHost", "compute.organizations.enableXpnResource", "compute.oslogin.updateExternalUser", "compute.firewallPolicies.removeAssociation", "compute.organizations.listAssociations", "compute.organizations.setSecurityPolicy", "compute.securityPolicies.addAssociation", "compute.securityPolicies.removeAssociation", "cloudonefs.isiloncloud.com/clusters.create", "cloudonefs.isiloncloud.com/clusters.delete", "cloudonefs.isiloncloud.com/clusters.get", "cloudonefs.isiloncloud.com/clusters.list", "cloudonefs.isiloncloud.com/clusters.update", "cloudonefs.isiloncloud.com/clusters.updateAdvancedSettings", "cloudonefs.isiloncloud.com/fileshares.create", "cloudonefs.isiloncloud.com/fileshares.delete", "cloudonefs.isiloncloud.com/fileshares.get", "cloudonefs.isiloncloud.com/fileshares.list", "cloudonefs.isiloncloud.com/fileshares.update", "domains.registrations.configureContact", "domains.registrations.configureDns", "domains.registrations.configureManagement", "domains.registrations.create", "domains.registrations.delete", "domains.registrations.get", "domains.registrations.getIamPolicy", "domains.registrations.list", "domains.registrations.setIamPolicy", "domains.registrations.update", "gcp.redisenterprise.com/databases.create", "gcp.redisenterprise.com/databases.delete", "gcp.redisenterprise.com/databases.get", "gcp.redisenterprise.com/databases.list", "gcp.redisenterprise.com/databases.update", "gcp.redisenterprise.com/subscriptions.create", "gcp.redisenterprise.com/subscriptions.delete", "gcp.redisenterprise.com/subscriptions.get", "gcp.redisenterprise.com/subscriptions.list", "gcp.redisenterprise.com/subscriptions.update", "servicemanagement.consumerSettings.get", "servicemanagement.consumerSettings.getIamPolicy", "servicemanagement.consumerSettings.list", "servicemanagement.consumerSettings.setIamPolicy", "servicemanagement.consumerSettings.update"]
+    },
+  ]
+}

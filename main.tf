@@ -22,3 +22,19 @@ module "project-factory" {
 #    "projects/base-project-196723/regions/us-central1/subnetworks/subnet-1",
 #  ]
 }
+
+module "custom-role-rog" {
+  source = "terraform-google-modules/iam/google//modules/custom_role_iam"
+
+  count = length(var.roles)
+
+  target_level         = "project"
+  target_id            = module.project-factory.project_id
+  role_id              = var.roles[count.index].role_id
+  title                = var.roles[count.index].title
+  description          = var.roles[count.index].description
+  base_roles           = var.roles[count.index].roles
+  permissions          = var.roles[count.index].permissions
+  excluded_permissions = var.roles[count.index].excluded_permissions
+  members              = []
+}
