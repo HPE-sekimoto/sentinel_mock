@@ -6,4 +6,7 @@ variable "zone" {
   description = "GCP zone name"
   default     = "asia-northeast1-c"
 }
-
+variable "location" {
+  description = "location"
+  default = "JP"
+}
