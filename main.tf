@@ -2,109 +2,90 @@
 variable "GOOGLE_CREDENTIALS" {}
 variable "project" {}
 
-provider google-beta {}
-provider tls{}
+# google_client_config and kubernetes provider must be explicitly specified like the following.
+data "google_client_config" "default" {}
 
-# variable "project_id" {
-#  type = string
-# }
-
-# variable "location" {
-#  type = string
-#}
-
-resource "random_string" "randomca" {
-  length  = 8
-  special = false
+provider "kubernetes" {
+  load_config_file       = false
+  host                   = "https://${module.gke.endpoint}"
+  token                  = data.google_client_config.default.access_token
+  cluster_ca_certificate = base64decode(module.gke.ca_certificate)
 }
 
-resource "tls_private_key" "example" {
-  algorithm = "RSA"
-}
+module "gke" {
+  source                     = "terraform-google-modules/kubernetes-engine/google"
+  project_id                 = var.project
+  name                       = "gke-test-1"
+  region                     = var.region
+  zones                      = ["asia-northeast1-a", "asia-northeast1-b", "asia-northeast1-f"]
+  network                    = "vpc-01"
+  subnetwork                 = "asia-northeast1-01"
+  ip_range_pods              = "asia-northeast1-01-gke-01-pods"
+  ip_range_services          = "asia-northeast1-01-gke-01-services"
+  http_load_balancing        = false
+  horizontal_pod_autoscaling = true
+  network_policy             = false
 
-resource "tls_cert_request" "example" {
-  key_algorithm   = "RSA"
-  private_key_pem = tls_private_key.example.private_key_pem
+  node_pools = [
+    {
+      name               = "default-node-pool"
+      machine_type       = "e2-medium"
+      node_locations     = "asia-northeast1-b,asia-northeast1-c"
+      min_count          = 1
+      max_count          = 100
+      local_ssd_count    = 0
+      disk_size_gb       = 100
+      disk_type          = "pd-standard"
+      image_type         = "COS"
+      auto_repair        = true
+      auto_upgrade       = true
+      service_account    = "project-service-account@<PROJECT ID>.iam.gserviceaccount.com"
+      preemptible        = false
+      initial_node_count = 80
+    },
+  ]
 
-  subject {
-    common_name  = "example.com"
-    organization = "ACME Examples, Inc"
+  node_pools_oauth_scopes = {
+    all = []
+
+    default-node-pool = [
+      "https://www.googleapis.com/auth/cloud-platform",
+    ]
   }
-}
 
-resource "google_privateca_certificate_authority" "ca" {
-  provider                 = google-beta
-  certificate_authority_id = format("%s-%s", random_string.randomca.result, "ca")
-  location                 = var.location
-  lifetime                 = "30000s"
-  project                  = var.project
-  type                     = "SELF_SIGNED"
-  key_spec {
-    algorithm = "RSA_PSS_2048_SHA256"
-  }
-  tier = "ENTERPRISE"
-  config {
-    subject_config {
-      common_name = "My Certificate Authority"
-      subject {
-        country_code        = "us"
-        organization        = "google"
-        organizational_unit = "enterprise"
-        locality            = "mountain view"
-        province            = "california"
-        street_address      = "1600 amphitheatre parkway"
-        postal_code         = "94109"
-      }
-    }
-    reusable_config {
-      reusable_config = format("projects/privateca-data/locations/%s/reusableConfigs/root-unconstrained", var.location)
-    }
-  }
-  disable_on_delete = true
-}
+  node_pools_labels = {
+    all = {}
 
-
-resource "google_privateca_certificate" "config" {
-  provider              = google-beta
-  certificate_authority = google_privateca_certificate_authority.ca.certificate_authority_id
-  project               = var.project
-  location              = var.location
-  lifetime              = "860s"
-  name                  = format("%s-%s", random_string.randomca.result, "cert-config")
-  config {
-    reusable_config {
-      reusable_config = format("projects/privateca-data/locations/%s/reusableConfigs/leaf-server-tls", var.location)
-    }
-    subject_config {
-      common_name = "My Certificate Authority"
-      subject_alt_name {
-        dns_names       = ["joonix.net"]
-        email_addresses = ["email@example.com"]
-        ip_addresses    = ["127.0.0.1"]
-        uris            = ["http://www.ietf.org/rfc/rfc3986.txt"]
-      }
-    }
-    public_key {
-      type = "PEM_RSA_KEY"
-      key  = base64encode(tls_private_key.example.public_key_pem)
+    default-node-pool = {
+      default-node-pool = true
     }
   }
-}
 
-resource "google_privateca_certificate" "pem" {
-  provider              = google-beta
-  certificate_authority = google_privateca_certificate_authority.ca.certificate_authority_id
-  project               = var.project
-  location              = var.location
-  lifetime              = "860s"
-  name                  = format("%s-%s", random_string.randomca.result, "csr-config")
-  pem_csr               = tls_cert_request.example.cert_request_pem
-}
+  node_pools_metadata = {
+    all = {}
 
-output "cert_specs_config" {
-  value = google_privateca_certificate.config.pem_certificate
-}
+    default-node-pool = {
+      node-pool-metadata-custom-value = "my-node-pool"
+    }
+  }
 
-output "cert_specs_pem" {
-  value = google_privateca_certificate.pem.pem_certificate
+  node_pools_taints = {
+    all = []
+
+    default-node-pool = [
+      {
+        key    = "default-node-pool"
+        value  = true
+        effect = "PREFER_NO_SCHEDULE"
+      },
+    ]
+  }
+
+  node_pools_tags = {
+    all = []
+
+    default-node-pool = [
+      "default-node-pool",
+    ]
+  }
 }
