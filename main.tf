@@ -45,6 +45,8 @@ module "gke" {
     },
   ]
 
+  enable_pod_security_policy = true
+
   node_pools_oauth_scopes = {
     all = []
 
