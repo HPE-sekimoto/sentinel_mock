@@ -13,7 +13,7 @@ provider "kubernetes" {
 }
 
 module "gke" {
-  source                     = "terraform-google-modules/kubernetes-engine/google"
+  source                     = "terraform-google-modules/kubernetes-engine/google//modules/beta-public-cluster"
   project_id                 = var.project
   name                       = "gke-test-1"
   region                     = var.region
@@ -90,4 +90,5 @@ module "gke" {
       "default-node-pool",
     ]
   }
+
 }
