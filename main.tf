@@ -2,93 +2,218 @@
 variable "GOOGLE_CREDENTIALS" {}
 variable "project" {}
 
-# google_client_config and kubernetes provider must be explicitly specified like the following.
-data "google_client_config" "default" {}
+#====================================================================
+# first layer folder creation
+#====================================================================
 
-provider "kubernetes" {
-  load_config_file       = false
-  host                   = "https://${module.gke.endpoint}"
-  token                  = data.google_client_config.default.access_token
-  cluster_ca_certificate = base64decode(module.gke.ca_certificate)
+module "folders1" {
+  source  = "terraform-google-modules/folders/google"
+  version = "~> 2.0"
+
+  parent = var.folders_layer1.parent
+
+  names = var.folders_layer1.folders
+
+  #  set_roles = true
+
+  #  per_folder_admins = {
+  #    dev = "group:gcp-developers@domain.com"
+  #    staging = "group:gcp-qa@domain.com"
+  #    production = "group:gcp-ops@domain.com"
+  #  }
+
+  #  all_folder_admins = [
+  #    "group:gcp-security@domain.com",
+  #  ]
 }
 
-module "gke" {
-  source                     = "terraform-google-modules/kubernetes-engine/google//modules/beta-public-cluster"
-  project_id                 = var.project
-  name                       = "gke-test-1"
-  region                     = var.region
-  zones                      = ["asia-northeast1-a", "asia-northeast1-b", "asia-northeast1-f"]
-  network                    = "vpc-01"
-  subnetwork                 = "asia-northeast1-01"
-  ip_range_pods              = "asia-northeast1-01-gke-01-pods"
-  ip_range_services          = "asia-northeast1-01-gke-01-services"
-  http_load_balancing        = false
-  horizontal_pod_autoscaling = true
-  network_policy             = false
+resource "google_folder_iam_audit_config" "folders1_folder" {
+  count = length(var.folders_layer1.folders)
+  folder  = "folders/${module.folders1.ids_list[count.index]}"
+  service = "allServices"
+  audit_log_config {
+    log_type = "ADMIN_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_READ"
+    exempted_members = [
+      "user:joebloggs@hashicorp.com",
+    ]
+  }
+}
 
-  node_pools = [
-    {
-      name               = "default-node-pool"
-      machine_type       = "e2-medium"
-      node_locations     = "asia-northeast1-b,asia-northeast1-c"
-      min_count          = 1
-      max_count          = 100
-      local_ssd_count    = 0
-      disk_size_gb       = 100
-      disk_type          = "pd-standard"
-      image_type         = "COS"
-      auto_repair        = true
-      auto_upgrade       = true
-      service_account    = "project-service-account@<PROJECT ID>.iam.gserviceaccount.com"
-      preemptible        = false
-      initial_node_count = 80
-    },
+#====================================================================
+# second layer folder creation
+#====================================================================
+
+module "folders_dept_abc" {
+  source  = "terraform-google-modules/folders/google"
+  version = "~> 2.0"
+
+  parent = module.folders1.ids[var.folders_layer2_dept_abc.parent]
+
+  names = var.folders_layer2_dept_abc.folders
+
+  depends_on = [
+    module.folders1.folders,
   ]
+  #  set_roles = true
 
-  enable_pod_security_policy = true
+  #  per_folder_admins = {
+  #    dev = "group:gcp-developers@domain.com"
+  #    staging = "group:gcp-qa@domain.com"
+  #    production = "group:gcp-ops@domain.com"
+  #  }
 
-  node_pools_oauth_scopes = {
-    all = []
+  #  all_folder_admins = [
+  #    "group:gcp-security@domain.com",
+  #  ]
+}
 
-    default-node-pool = [
-      "https://www.googleapis.com/auth/cloud-platform",
+resource "google_folder_iam_audit_config" "folders_dept_abc_folder" {
+  count = length(module.folders_dept_abc.folders)
+  folder  = "folders/${module.folders_dept_abc.ids_list[count.index]}"
+  service = "allServices"
+  audit_log_config {
+    log_type = "ADMIN_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_READ"
+    exempted_members = [
+      "user:joebloggs@hashicorp.com",
     ]
   }
+  depends_on = [
+    module.folders_dept_abc.folders,
+  ]
+}
 
-  node_pools_labels = {
-    all = {}
+module "folders_shared_it" {
+  source  = "terraform-google-modules/folders/google"
+  version = "~> 2.0"
 
-    default-node-pool = {
-      default-node-pool = true
-    }
+  parent = module.folders1.ids[var.folders_layer2_shared_it.parent]
+
+  names = var.folders_layer2_shared_it.folders
+
+  depends_on = [
+    module.folders1.folders,
+  ]
+  #  set_roles = true
+
+  #  per_folder_admins = {
+  #    dev = "group:gcp-developers@domain.com"
+  #    staging = "group:gcp-qa@domain.com"
+  #    production = "group:gcp-ops@domain.com"
+  #  }
+
+  #  all_folder_admins = [
+  #    "group:gcp-security@domain.com",
+  #  ]
+}
+
+resource "google_folder_iam_audit_config" "folders_shared_it_folder" {
+  count = length(module.folders_shared_it.folders)
+  folder  = "folders/${module.folders_shared_it.ids_list[count.index]}"
+  service = "allServices"
+  audit_log_config {
+    log_type = "ADMIN_READ"
   }
-
-  node_pools_metadata = {
-    all = {}
-
-    default-node-pool = {
-      node-pool-metadata-custom-value = "my-node-pool"
-    }
-  }
-
-  node_pools_taints = {
-    all = []
-
-    default-node-pool = [
-      {
-        key    = "default-node-pool"
-        value  = true
-        effect = "PREFER_NO_SCHEDULE"
-      },
+  audit_log_config {
+    log_type = "DATA_READ"
+    exempted_members = [
+      "user:joebloggs@hashicorp.com",
     ]
   }
+  depends_on = [
+    module.folders_shared_it.folders,
+  ]
+}
 
-  node_pools_tags = {
-    all = []
+#====================================================================
+# third layer folder creation
+#====================================================================
 
-    default-node-pool = [
-      "default-node-pool",
+module "folders_section_xyz" {
+  source  = "terraform-google-modules/folders/google"
+  version = "~> 2.0"
+
+  parent = module.folders_dept_abc.ids[var.folders_layer3_section_xyz.parent]
+
+  names = var.folders_layer3_section_xyz.folders
+
+  depends_on = [
+    module.folders_dept_abc.folders,
+  ]
+  #  set_roles = true
+
+  #  per_folder_admins = {
+  #    dev = "group:gcp-developers@domain.com"
+  #    staging = "group:gcp-qa@domain.com"
+  #    production = "group:gcp-ops@domain.com"
+  #  }
+
+  #  all_folder_admins = [
+  #    "group:gcp-security@domain.com",
+  #  ]
+}
+
+resource "google_folder_iam_audit_config" "folders_section_xyz_folder" {
+  count = length(module.folders_section_xyz.folders)
+  folder  = "folders/${module.folders_section_xyz.ids_list[count.index]}"
+  service = "allServices"
+  audit_log_config {
+    log_type = "ADMIN_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_READ"
+    exempted_members = [
+      "user:joebloggs@hashicorp.com",
     ]
   }
+  depends_on = [
+    module.folders_section_xyz.folders,
+  ]
+}
 
+module "folders_shared_infrastructure" {
+  source  = "terraform-google-modules/folders/google"
+  version = "~> 2.0"
+
+  parent = module.folders_shared_it.ids[var.folders_layer3_shared_infrastructure.parent]
+
+  names = var.folders_layer3_shared_infrastructure.folders
+
+  depends_on = [
+    module.folders_shared_it.folders,
+  ]
+  #  set_roles = true
+
+  #  per_folder_admins = {
+  #    dev = "group:gcp-developers@domain.com"
+  #    staging = "group:gcp-qa@domain.com"
+  #    production = "group:gcp-ops@domain.com"
+  #  }
+
+  #  all_folder_admins = [
+  #    "group:gcp-security@domain.com",
+  #  ]
+}
+
+resource "google_folder_iam_audit_config" "folders_shared_infrastructure_folder" {
+  count = length(module.folders_shared_infrastructure.folders)
+  folder  = "folders/${module.folders_shared_infrastructure.ids_list[count.index]}"
+  service = "allServices"
+  audit_log_config {
+    log_type = "ADMIN_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_READ"
+    exempted_members = [
+      "user:joebloggs@hashicorp.com",
+    ]
+  }
+  depends_on = [
+    module.folders_shared_infrastructure.folders,
+  ]
 }
