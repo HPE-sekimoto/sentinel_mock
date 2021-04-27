@@ -29,16 +29,13 @@ module "folders1" {
 
 resource "google_folder_iam_audit_config" "folders1_folder" {
   count = length(var.folders_layer1.folders)
-  folder  = "folders/${module.folders1.ids_list[count.index]}"
+  folder  = module.folders1.ids_list[count.index]
   service = "allServices"
   audit_log_config {
     log_type = "ADMIN_READ"
   }
   audit_log_config {
     log_type = "DATA_READ"
-    exempted_members = [
-      "user:joebloggs@hashicorp.com",
-    ]
   }
 }
 
@@ -72,16 +69,13 @@ module "folders_dept_abc" {
 
 resource "google_folder_iam_audit_config" "folders_dept_abc_folder" {
   count = length(module.folders_dept_abc.folders)
-  folder  = "folders/${module.folders_dept_abc.ids_list[count.index]}"
+  folder  = module.folders_dept_abc.ids_list[count.index]
   service = "allServices"
   audit_log_config {
     log_type = "ADMIN_READ"
   }
   audit_log_config {
     log_type = "DATA_READ"
-    exempted_members = [
-      "user:joebloggs@hashicorp.com",
-    ]
   }
   depends_on = [
     module.folders_dept_abc.folders,
@@ -114,16 +108,13 @@ module "folders_shared_it" {
 
 resource "google_folder_iam_audit_config" "folders_shared_it_folder" {
   count = length(module.folders_shared_it.folders)
-  folder  = "folders/${module.folders_shared_it.ids_list[count.index]}"
+  folder  = module.folders_shared_it.ids_list[count.index]
   service = "allServices"
   audit_log_config {
     log_type = "ADMIN_READ"
   }
   audit_log_config {
     log_type = "DATA_READ"
-    exempted_members = [
-      "user:joebloggs@hashicorp.com",
-    ]
   }
   depends_on = [
     module.folders_shared_it.folders,
@@ -160,16 +151,13 @@ module "folders_section_xyz" {
 
 resource "google_folder_iam_audit_config" "folders_section_xyz_folder" {
   count = length(module.folders_section_xyz.folders)
-  folder  = "folders/${module.folders_section_xyz.ids_list[count.index]}"
+  folder  = module.folders_section_xyz.ids_list[count.index]
   service = "allServices"
   audit_log_config {
     log_type = "ADMIN_READ"
   }
   audit_log_config {
     log_type = "DATA_READ"
-    exempted_members = [
-      "user:joebloggs@hashicorp.com",
-    ]
   }
   depends_on = [
     module.folders_section_xyz.folders,
@@ -202,16 +190,13 @@ module "folders_shared_infrastructure" {
 
 resource "google_folder_iam_audit_config" "folders_shared_infrastructure_folder" {
   count = length(module.folders_shared_infrastructure.folders)
-  folder  = "folders/${module.folders_shared_infrastructure.ids_list[count.index]}"
+  folder  = module.folders_shared_infrastructure.ids_list[count.index]
   service = "allServices"
   audit_log_config {
     log_type = "ADMIN_READ"
   }
   audit_log_config {
     log_type = "DATA_READ"
-    exempted_members = [
-      "user:joebloggs@hashicorp.com",
-    ]
   }
   depends_on = [
     module.folders_shared_infrastructure.folders,
