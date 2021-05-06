@@ -18,63 +18,15 @@ variable "organization" {
   description = "organization name"
   default     = "organizations/48328552181"
 }
-
-variable "folders_layer1" {
-  description = "folders layer1"
-  type = object({
-    parent  = string
-    folders = list(string)
-  })
-  default = {
-    parent  = "organizations/48328552181"
-    folders = ["Dept abc", "Dept xyz", "Shared IT"]
-  }
+variable "network" {
+  default = "test"
 }
-
-variable "folders_layer2_dept_abc" {
-  description = "folders layer2"
-  type = object({
-    parent  = string
-    folders = list(string)
-  })
-  default = {
-    parent  = "Dept abc"
-    folders = ["Section xyz", "Section abc"]
-  }
+variable "mysql_version" {
+  default = "MYSQL_5_6"
 }
-
-variable "folders_layer2_shared_it" {
-  description = "folders layer2"
-  type = object({
-    parent  = string
-    folders = list(string)
-  })
-  default = {
-    parent  = "Shared IT"
-    folders = ["Shared Infrastructure"]
-  }
+variable "postgresql_version" {
+  default = "POSTGRES_9_6"
 }
-
-variable "folders_layer3_section_xyz" {
-  description = "folders layer3"
-  type = object({
-    parent  = string
-    folders = list(string)
-  })
-  default = {
-    parent  = "Section xyz"
-    folders = ["EWS Application", "Application X"]
-  }
-}
-
-variable "folders_layer3_shared_infrastructure" {
-  description = "folders layer3"
-  type = object({
-    parent  = string
-    folders = list(string)
-  })
-  default = {
-    parent  = "Shared Infrastructure"
-    folders = ["Production", "Non-production"]
-  }
+variable "network_name" {
+  default = "mysql-psql-example"
 }
