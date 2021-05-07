@@ -2,41 +2,90 @@
 variable "GOOGLE_CREDENTIALS" {}
 variable "project" {}
 
-resource "google_compute_network" "default" {
-  name                    = var.network_name
-  auto_create_subnetworks = "false"
-}
+data "google_iam_policy" "admin" {
+  binding {
+    role = "roles/compute.instanceAdmin"
 
-resource "google_compute_subnetwork" "default" {
-  name                     = var.network_name
-  ip_cidr_range            = "10.127.0.0/20"
-  network                  = google_compute_network.default.self_link
-  region                   = var.region
-  private_ip_google_access = true
-}
-
-module "mysql-db" {
-  source = "GoogleCloudPlatform/sql-db/google//modules/mysql"
-
-  name             = "testdb-1"
-  database_version = var.mysql_version
-  project_id       = var.project
-  zone             = var.zone
-
-  ip_configuration = {
-    authorized_networks = [{
-      name  = var.network_name
-      value = google_compute_subnetwork.default.ip_cidr_range
-    }]
-    ipv4_enabled    = true
-    private_network = ""
-    require_ssl     = true
+    members = [
+      "serviceAccount:terraform-admin@ksgadget-admin-1.iam.gserviceaccount.com",
+    ]
   }
 
-  database_flags = [
-    {
-      name  = "log_bin_trust_function_creators"
-      value = "on"
-    },
-  ]
+  binding {
+    role = "roles/storage.objectViewer"
+
+    members = [
+      "user:ksgadget@ksgadget.site",
+    ]
+  }
+
+  audit_config {
+    service = "cloudkms.googleapis.com"
+    audit_log_configs {
+      log_type = "DATA_READ"
+      exempted_members = ["user:ksgadget@ksgadget.site"]
+    }
+
+    audit_log_configs {
+      log_type = "DATA_WRITE"
+    }
+
+    audit_log_configs {
+      log_type = "ADMIN_READ"
+    }
+  }
+}
+
+# https://github.com/terraform-google-modules/terraform-google-folders
+
+#====================================================================
+# first layer folder creation
+#====================================================================
+
+module "folders1" {
+  source  = "terraform-google-modules/folders/google"
+  version = "~> 2.0"
+
+  parent = var.folders_layer1.parent
+
+  names = var.folders_layer1.folders
+
+  #  set_roles = true
+
+  #  per_folder_admins = {
+  #    dev = "group:gcp-developers@domain.com"
+  #    staging = "group:gcp-qa@domain.com"
+  #    production = "group:gcp-ops@domain.com"
+  #  }
+
+  #  all_folder_admins = [
+  #    "group:gcp-security@domain.com",
+  #  ]
+}
+
+resource "google_folder_iam_audit_config" "folders1_folder" {
+  count = length(var.folders_layer1.folders)
+  folder  = module.folders1.ids_list[count.index]
+  service = "allServices"
+  audit_log_config {
+    log_type = "ADMIN_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_READ"
+  }
+}
+
+resource "google_folder_iam_audit_config" "folders1_folder_specific" {
+  count = length(var.folders_layer1.folders)
+  folder  = module.folders1.ids_list[count.index]
+  service = "appengine.googleapis.com"
+  audit_log_config {
+    log_type = "ADMIN_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_WRITE"
+  }
 }

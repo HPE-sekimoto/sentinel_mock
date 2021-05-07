@@ -18,15 +18,15 @@ variable "organization" {
   description = "organization name"
   default     = "organizations/48328552181"
 }
-variable "network" {
-  default = "test"
-}
-variable "mysql_version" {
-  default = "MYSQL_5_6"
-}
-variable "postgresql_version" {
-  default = "POSTGRES_9_6"
-}
-variable "network_name" {
-  default = "mysql-psql-example"
+
+variable "folders_layer1" {
+  description = "folders layer1"
+  type = object({
+    parent  = string
+    folders = list(string)
+  })
+  default = {
+    parent  = "organizations/48328552181"
+    folders = ["Dept abc", "Dept xyz", "Shared IT"]
+  }
 }
