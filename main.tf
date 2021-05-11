@@ -2,13 +2,6 @@
 variable "GOOGLE_CREDENTIALS" {}
 variable "project" {}
 
-// GCP provider
-provider "google" {
-  credentials = file("../../../.ssh/ksgadget-admin-1-57ec6bc5197f.json")
-  project     = var.project
-  region      = var.region
-}
-
 resource "google_compute_network" "default" {
   name                    = var.network_name
   auto_create_subnetworks = "false"
