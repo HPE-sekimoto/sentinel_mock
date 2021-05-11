@@ -2,10 +2,6 @@ variable "region" {
   description = "GCP region name"
   default     = "asia-northeast1"
 }
-variable "project" {
-  description = "GCP project name"
-  default     = "optimal-mender-309507"
-}
 variable "zone" {
   description = "GCP zone name"
   default     = "asia-northeast1-c"
