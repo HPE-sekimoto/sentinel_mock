@@ -22,29 +22,7 @@ variable "env" {
   description = "environment name"
   default     = "Terraform Demo"
 }
-variable "db_tier" {
-  description = "dababase tier name"
-  default     = "db-n1-standard-1"
-}
-variable "network" {
-  default = "test"
-}
-variable "mysql_version" {
-  default = "MYSQL_5_7"
-}
-variable "postgresql_version" {
-  default = "POSTGRES_9_6"
-}
-variable "network_name" {
-  default = "default"
-}
-variable "mysql_ha_name" {
-  type        = string
-  description = "The name for Cloud SQL instance"
-  default     = "tf-mysql-ha"
-}
-variable "mysql_ha_external_ip_range" {
-  type        = string
-  description = "The ip range to allow connecting from/to Cloud SQL"
-  default     = "192.10.10.10/32"
+variable "ip_white_list" {
+  description = "A list of ip addresses that can be white listed through security policies"
+  default     = ["192.0.2.0/24"]
 }
