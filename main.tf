@@ -18,7 +18,7 @@ module "project-factory" {
   name                    = "simple-sample-project"
   org_id                  = var.organization_id
   billing_account         = var.billing_account
-  credentials_path        = file("../../../.ssh/gcp_credential.json")
+  # credentials_path        = file("../../../.ssh/gcp_credential.json")
   default_service_account = "deprivilege"
 
   activate_api_identities = [{
