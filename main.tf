@@ -127,6 +127,9 @@ resource "google_compute_disk" "ext_disk2" {
   type  = "pd-ssd"
   zone = var.zone
   size = 16
+  disk_encryption_key {
+    raw_key = google_kms_crypto_key.customer_key.self_link
+  }
 }
 
 module "bucket1" {
@@ -148,4 +151,20 @@ module "bucket2" {
   name       = "example-xxx-bucket2"
   project_id = var.project_id
   location   = "asia-northeast1"
+}
+
+module "kms" {
+  source  = "terraform-google-modules/kms/google"
+  version = "~> 1.2"
+
+  project_id         = var.project_id
+  location           = "europe"
+  keyring            = "sample-keyring"
+  keys               = ["foo", "spam"]
+  set_owners_for     = ["foo", "spam"]
+  prevent_destroy = true
+  owners = [
+    "group:one@example.com,group:two@example.com",
+    "group:one@example.com",
+  ]
 }
