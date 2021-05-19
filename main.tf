@@ -16,6 +16,7 @@ data "google_compute_zones" "available" {
 resource "google_compute_disk" "default" {
   name  = "test-disk"
   type  = "pd-ssd"
+  size  = 50
   zone  = var.zone
   image = "debian-9-stretch-v20200805"
   labels = {
