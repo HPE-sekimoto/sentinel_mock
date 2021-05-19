@@ -108,7 +108,7 @@ resource "google_kms_crypto_key" "customer_key" {
   rotation_period = "100000s"
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 }
 
