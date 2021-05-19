@@ -1,16 +1,31 @@
 variable "region" {
   description = "GCP region name"
-  default     = "asia-northeast1"
+  default     = "asia-east1"
 }
 variable "zone" {
   description = "GCP zone name"
-  default     = "asia-northeast1-c"
+  default     = "asia-east1-a"
 }
-variable "organization_id" {
-  description = "The organization id for the associated services"
-  default     = "48328552181"
+variable "vm_name" {
+  description = "VM name"
+  default     = "ks-terraform-test"
 }
-variable "billing_account" {
-  description = "The ID of the billing account to associate this project with"
-  default = "0148D8-5027F4-BCB19F"
+variable "machine_type" {
+  description = "Machine Type"
+  default     = "f1-micro"
+}
+variable "env" {
+  description = "environment name"
+  default     = "Terraform Demo"
+}
+variable "service_account" {
+  type = object({
+    email  = string,
+    scopes = list(string)
+  })
+  description = ""
+  default = {
+    email  = "terraform-admin@kensekimoto.iam.gserviceaccount.com"
+    scopes = ["cloud-platform"]
+  }
 }
