@@ -18,14 +18,3 @@ variable "env" {
   description = "environment name"
   default     = "Terraform Demo"
 }
-variable "service_account" {
-  type = object({
-    email  = string,
-    scopes = list(string)
-  })
-  description = ""
-  default = {
-    email  = "terraform-admin@kensekimoto.iam.gserviceaccount.com"
-    scopes = ["cloud-platform"]
-  }
-}
