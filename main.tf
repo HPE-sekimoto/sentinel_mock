@@ -2,169 +2,138 @@
 variable "GOOGLE_CREDENTIALS" {}
 variable "project_id" {}
 
-resource "google_compute_address" "static1" {
-  name = "ipv4-address"
-  network_tier = "STANDARD"
-  description = "static ip for my_ubuntu"
+resource "google_compute_network" "default" {
+  name                    = var.network_name
+  auto_create_subnetworks = false
 }
 
-resource "google_compute_address" "static2" {
-  name = "ipv4-address"
-  network_tier = "STANDARD"
-  description = "static ip for my_ubuntu"
+resource "google_compute_subnetwork" "default" {
+  name                     = var.network_name
+  ip_cidr_range            = "10.127.0.0/20"
+  network                  = google_compute_network.default.self_link
+  region                   = var.region
+  private_ip_google_access = true
 }
 
-data "google_compute_image" "my_ubuntu-pro-2004-lts" {
-  family  = "ubuntu-pro-2004-lts"
-  project = "ubuntu-os-pro-cloud"
+resource "google_compute_router" "default" {
+  name    = "lb-https-redirect-router"
+  network = google_compute_network.default.self_link
+  region  = var.region
 }
 
-data "google_compute_image" "my_debian_9" {
-  family  = "debian-9"
-  project = "debian-cloud"
-}
-
-data "google_compute_image" "my_windows_2016" {
-  family  = "windows-2016"
-  project = "windows-cloud"
-}
-
-resource "google_compute_instance" "vm_ubuntu-pro-2004-lts" {
-  name         = var.vm_name
-  machine_type = var.machine_type
-  zone         = var.zone
-  description  = "ubuntu 2004 lts"
-  tags         = ["terraform-test"]
-  boot_disk {
-    initialize_params {
-      image = data.google_compute_image.my_ubuntu-pro-2004-lts.self_link
-    }
-    kms_key_self_link = google_kms_crypto_key.customer_key.self_link
-  }
-  network_interface {
-    network = "default"
-    access_config {
-      nat_ip = google_compute_address.static1.address
-    }
-  }
-  service_account {
-    scopes = ["userinfo-email", "compute-ro", "storage-ro", "monitoring"]
-  }
-}
-
-resource "google_compute_instance" "vm_debian_9" {
-  name         = var.vm_name
-  machine_type = var.machine_type
-  zone         = var.zone
-  description  = "debian 9"
-  tags         = ["terraform-test"]
-  boot_disk {
-    initialize_params {
-      image = data.google_compute_image.my_debian_9.self_link
-    }
-    kms_key_self_link = google_kms_crypto_key.customer_key.self_link
-  }
-  network_interface {
-    network = "default"
-    access_config {
-      nat_ip = google_compute_address.static2.address
-    }
-  }
-  service_account {
-    scopes = ["userinfo-email", "compute-ro", "storage-ro", "monitoring"]
-  }
-}
-
-resource "google_compute_instance" "vm_windows_2016" {
-  name         = var.vm_name
-  machine_type = var.machine_type
-  zone         = var.zone
-  description  = "gcp-terraform-test"
-  tags         = ["terraform-test"]
-  boot_disk {
-    initialize_params {
-      image = data.google_compute_image.my_windows_2016.self_link
-    }
-  }
-  network_interface {
-    network = "default"
-    access_config {
-      // Ephemeral IP
-    }
-  }
-  service_account {
-    scopes = ["userinfo-email", "compute-ro", "storage-ro", "monitoring"]
-  }
-}
-
-resource "google_kms_key_ring" "keyring" {
-  name     = "keyring-example"
-  location = "global"
-}
-
-resource "google_kms_crypto_key" "customer_key" {
-  name            = "crypto-key-example"
-  key_ring        = google_kms_key_ring.keyring.id
-  rotation_period = "100000s"
-
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-
-resource "google_compute_disk" "ext_disk1" {
-  name  = "testdisk"
-  type  = "pd-ssd"
-  zone = var.zone
-  size = 16
-  disk_encryption_key {
-    raw_key = google_kms_crypto_key.customer_key.self_link
-  }
-}
-
-resource "google_compute_disk" "ext_disk2" {
-  name  = "testdisk"
-  type  = "pd-ssd"
-  zone = var.zone
-  size = 16
-  disk_encryption_key {
-    raw_key = google_kms_crypto_key.customer_key.self_link
-  }
-}
-
-module "bucket1" {
-  source  = "terraform-google-modules/cloud-storage/google//modules/simple_bucket"
-  version = "~> 1.3"
-
-  name       = "example-xxx-bucket1"
+module "cloud-nat" {
+  source     = "terraform-google-modules/cloud-nat/google"
+  version    = "1.4.0"
+  router     = google_compute_router.default.name
   project_id = var.project_id
-  location   = "asia-northeast1"
-  encryption = {
-    default_kms_key_name = "crypto-key-example"
+  region     = var.region
+  name       = "cloud-nat-lb-https-redirect"
+}
+
+data "template_file" "group-startup-script" {
+  template = file(format("%s/gceme.sh.tpl", path.module))
+
+  vars = {
+    PROXY_PATH = ""
   }
 }
 
-module "bucket2" {
-  source  = "terraform-google-modules/cloud-storage/google//modules/simple_bucket"
-  version = "~> 1.3"
-
-  name       = "example-xxx-bucket2"
-  project_id = var.project_id
-  location   = "asia-northeast1"
-}
-
-module "kms" {
-  source  = "terraform-google-modules/kms/google"
-  version = "~> 1.2"
-
-  project_id         = var.project_id
-  location           = "europe"
-  keyring            = "sample-keyring"
-  keys               = ["foo", "spam"]
-  set_owners_for     = ["foo", "spam"]
-  prevent_destroy = true
-  owners = [
-    "group:one@example.com,group:two@example.com",
-    "group:one@example.com",
+module "mig_template" {
+  source     = "terraform-google-modules/vm/google//modules/instance_template"
+  version    = "6.2.0"
+  network    = google_compute_network.default.self_link
+  subnetwork = google_compute_subnetwork.default.self_link
+  service_account = {
+    email  = ""
+    scopes = ["cloud-platform"]
+  }
+  name_prefix    = var.network_name
+  startup_script = data.template_file.group-startup-script.rendered
+  tags = [
+    var.network_name,
+    module.cloud-nat.router_name
   ]
+}
+
+module "mig" {
+  source            = "terraform-google-modules/vm/google//modules/mig"
+  version           = "6.2.0"
+  instance_template = module.mig_template.self_link
+  region            = var.region
+  hostname          = var.network_name
+  target_size       = 2
+  named_ports = [{
+    name = "http",
+    port = 80
+  }]
+  network    = google_compute_network.default.self_link
+  subnetwork = google_compute_subnetwork.default.self_link
+}
+
+module "gce-lb-http" {
+  source            = "GoogleCloudPlatform/lb-http/google"
+  version           = "~> 4.4"
+  name                 = "ci-https-redirect"
+  project              = var.project_id
+  target_tags          = [var.network_name]
+  firewall_networks    = [google_compute_network.default.name]
+  ssl                  = true
+  ssl_certificates     = [google_compute_ssl_certificate.example.self_link]
+  use_ssl_certificates = true
+  https_redirect       = true
+
+  backends = {
+    default = {
+      description                     = null
+      protocol                        = "HTTP"
+      port                            = 80
+      port_name                       = "http"
+      timeout_sec                     = 10
+      connection_draining_timeout_sec = null
+      enable_cdn                      = false
+      security_policy                 = null
+      session_affinity                = null
+      affinity_cookie_ttl_sec         = null
+      custom_request_headers          = null
+
+      health_check = {
+        check_interval_sec  = null
+        timeout_sec         = null
+        healthy_threshold   = null
+        unhealthy_threshold = null
+        request_path        = "/"
+        port                = 80
+        host                = null
+        logging             = null
+      }
+
+      log_config = {
+        enable      = false
+        sample_rate = null
+      }
+
+      groups = [
+        {
+          group                        = module.mig.instance_group
+          balancing_mode               = null
+          capacity_scaler              = null
+          description                  = null
+          max_connections              = null
+          max_connections_per_instance = null
+          max_connections_per_endpoint = null
+          max_rate                     = null
+          max_rate_per_instance        = null
+          max_rate_per_endpoint        = null
+          max_utilization              = null
+        }
+      ]
+      iap_config = {
+        enable               = false
+        oauth2_client_id     = ""
+        oauth2_client_secret = ""
+      }
+    }
+  }
+
+
 }
