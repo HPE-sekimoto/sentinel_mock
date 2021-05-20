@@ -59,6 +59,8 @@ module "mig_template" {
 module "mig" {
   source            = "terraform-google-modules/vm/google//modules/mig"
   version           = "6.2.0"
+
+  project              = var.project_id
   instance_template = module.mig_template.self_link
   region            = var.region
   hostname          = var.network_name
