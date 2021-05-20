@@ -2,6 +2,15 @@
 variable "GOOGLE_CREDENTIALS" {}
 variable "project_id" {}
 variable "project" {}
+// GCP provider
+provider "google" {
+  project     = var.project_id
+  region      = var.region
+}
+
+provider "google-beta" {
+  project = var.project_id
+}
 
 resource "google_compute_network" "default" {
   name                    = var.network_name
@@ -60,7 +69,6 @@ module "mig" {
   source            = "terraform-google-modules/vm/google//modules/mig"
   version           = "6.2.0"
 
-  project              = var.project_id
   instance_template = module.mig_template.self_link
   region            = var.region
   hostname          = var.network_name
