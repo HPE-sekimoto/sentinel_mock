@@ -1,14 +1,14 @@
 variable "region" {
   description = "GCP region name"
-  default     = "asia-east1"
+  default     = "asia-northeast1"
 }
 variable "zone" {
   description = "GCP zone name"
-  default     = "asia-east1-a"
+  default     = "asia-northeast1-c"
 }
-variable "vm_name" {
-  description = "VM name"
-  default     = "ks-terraform-test"
+variable "router_name" {
+  description = "router name"
+  default     = "rt-01"
 }
 variable "machine_type" {
   description = "Machine Type"
@@ -17,7 +17,4 @@ variable "machine_type" {
 variable "env" {
   description = "environment name"
   default     = "Terraform Demo"
-}
-variable "network_name" {
-  default = "tf-lb-https-redirect-nat"
 }
