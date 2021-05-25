@@ -18,3 +18,15 @@ variable "env" {
   description = "environment name"
   default     = "Terraform Demo"
 }
+variable "vpc_name" {
+  description = "VPC name"
+  default     = "my-vpc"
+}
+variable "dns_name" {
+  description = "dns name"
+  default     = "my-dns"
+}
+variable "dns_domain" {
+  description = "dns name"
+  default     = "ksgadget.site."
+}
