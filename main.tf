@@ -2,6 +2,7 @@
 variable "GOOGLE_CREDENTIALS" {}
 variable "project_id" {}
 variable "project" {}
+variable "billing_account" {}
 // GCP provider
 provider "google" {
   project     = var.project_id
@@ -28,7 +29,7 @@ module "project-factory" {
   name                    = "mvc01-dev"
   org_id                  = var.organization_id
   billing_account         = var.billing_account
-  credentials_path        = file("../../../.ssh/gcp_credential.json")
+  # credentials_path        = file("../../../.ssh/gcp_credential.json")
   default_service_account = "deprivilege"
 
   activate_api_identities = [{
