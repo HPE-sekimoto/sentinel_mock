@@ -56,3 +56,15 @@ variable "roles" {
     },
   ]
 }
+
+variable "folders_layer1" {
+  description = "folders layer1"
+  type = object({
+    parent  = string
+    folders = list(string)
+  })
+  default = {
+    parent  = "organizations/48328552181"
+    folders = ["dep1", "sec1", "app1"]
+  }
+}

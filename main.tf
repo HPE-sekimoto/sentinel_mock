@@ -22,6 +22,27 @@ provider "random" {
   version = "~> 2.2"
 }
 
+module "folders1" {
+  source  = "terraform-google-modules/folders/google"
+  version = "~> 2.0"
+
+  parent = "organizations/${var.organization_id}"
+
+  names = var.folders_layer1.folders
+
+  #  set_roles = true
+
+  #  per_folder_admins = {
+  #    dev = "group:gcp-developers@domain.com"
+  #    staging = "group:gcp-qa@domain.com"
+  #    production = "group:gcp-ops@domain.com"
+  #  }
+
+  #  all_folder_admins = [
+  #    "group:gcp-security@domain.com",
+  #  ]
+}
+
 module "project-factory" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 10.1"
