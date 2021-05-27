@@ -2,6 +2,7 @@
 variable "GOOGLE_CREDENTIALS" {}
 variable "project_id" {}
 variable "project" {}
+variable "organization_id" {}
 variable "billing_account" {}
 // GCP provider
 provider "google" {
