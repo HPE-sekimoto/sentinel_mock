@@ -12,101 +12,58 @@ provider "google-beta" {
   project = var.project_id
 }
 
-module "vpc" {
-    source  = "terraform-google-modules/network/google"
-    version = "~> 3.0"
-
-    project_id   = var.project_id
-    network_name = var.vpc_name
-    routing_mode = "GLOBAL"
-
-    subnets = [
-        {
-            subnet_name           = "subnet-01"
-            subnet_ip             = "10.10.10.0/24"
-            subnet_region         = var.region
-        },
-        {
-            subnet_name           = "subnet-02"
-            subnet_ip             = "10.10.20.0/24"
-            subnet_region         = var.region
-            subnet_private_access = "true"
-            subnet_flow_logs      = "true"
-            description           = "This subnet has a description"
-        },
-        {
-            subnet_name               = "subnet-03"
-            subnet_ip                 = "10.10.30.0/24"
-            subnet_region             = var.region
-            subnet_flow_logs          = "true"
-            subnet_flow_logs_interval = "INTERVAL_10_MIN"
-            subnet_flow_logs_sampling = 0.7
-            subnet_flow_logs_metadata = "INCLUDE_ALL_METADATA"
-        }
-    ]
-
-    secondary_ranges = {
-        subnet-01 = [
-            {
-                range_name    = "subnet-01-secondary-01"
-                ip_cidr_range = "192.168.64.0/24"
-            },
-        ]
-
-        subnet-02 = []
-    }
-
-    routes = [
-        {
-            name                   = "egress-internet"
-            description            = "route through IGW to access internet"
-            destination_range      = "0.0.0.0/0"
-            tags                   = "egress-inet"
-            next_hop_internet      = "true"
-        },
-#        {
-#            name                   = "app-proxy"
-#            description            = "route through proxy to reach app"
-#            destination_range      = "10.50.10.0/24"
-#            tags                   = "app-proxy"
-#            next_hop_instance      = "app-proxy-instance"
-#            next_hop_instance_zone = "us-west1-a"
-#        },
-    ]
+provider "null" {
+  version = "~> 2.1"
 }
 
-module "dns-private-zone" {
-  source  = "terraform-google-modules/cloud-dns/google"
-  version = "3.0.0"
-  project_id = var.project_id
-  type       = "private"
-  name       = var.dns_name
-  domain     = var.dns_domain
+provider "random" {
+  version = "~> 2.2"
+}
 
-  private_visibility_config_networks = [
-    "https://www.googleapis.com/compute/v1/projects/red-minutia-275210/global/networks/my-vpc"
-  ]
+module "project-factory" {
+  source  = "terraform-google-modules/project-factory/google"
+  version = "~> 10.1"
 
-  recordsets = [
-#    {
-#      name    = ""
-#      type    = "NS"
-#      ttl     = 300
-#      records = [
-#        "127.0.0.1",
-#      ]
-#    },
-#    {
-#      name    = "localhost"
-#      type    = "A"
-#      ttl     = 300
-#      records = [
-#        "127.0.0.1",
-#      ]
-#    },
-  ]
+  random_project_id       = true
+  name                    = "mvc01-dev"
+  org_id                  = var.organization_id
+  billing_account         = var.billing_account
+  credentials_path        = file("../../../.ssh/gcp_credential.json")
+  default_service_account = "deprivilege"
 
-  depends_on = [
-    module.vpc
-  ]
+  activate_api_identities = [{
+    api = "healthcare.googleapis.com"
+    roles = [
+      "roles/healthcare.serviceAgent",
+      "roles/bigquery.jobUser",
+    ]
+  }]
+}
+
+resource "google_project_iam_audit_config" "project_allservices" {
+  project = module.project-factory.project_id
+  service = "allServices"
+  audit_log_config {
+    log_type = "ADMIN_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_READ"
+    exempted_members = [
+      "user:ksekimoto@ksgadget.site",
+    ]
+  }
+}
+
+resource "google_project_iam_audit_config" "project_appengine" {
+  project = module.project-factory.project_id
+  service = "appengine.googleapis.com"
+  audit_log_config {
+    log_type = "ADMIN_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_WRITE"
+  }
 }
